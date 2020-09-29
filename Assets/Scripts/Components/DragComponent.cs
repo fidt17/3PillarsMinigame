@@ -10,35 +10,46 @@ public class DragComponent : MonoBehaviour {
     private bool _dragging = false;
     private bool _isMouseOver = false;
     
-    private List<CellComponent> _possibleCells;
-
     public void SetBlock(Block block) => _block = block;
-
-    private void Update() {
-        if (_dragging) {
-            FollowCursor();
-        }
-    }
 
     private void OnMouseOver() {
         if (Input.GetMouseButtonDown(0) && !UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) {
-            _dragging = true;
-            GameField.GetInstance().Data.RemoveBlock(_block);
-            _possibleCells = GameField.GetInstance().GetPossibleCellsForBlock(_block);
-            _possibleCells.ForEach(x => x.SetActive(true));
+            StartCoroutine(StartDragging());
         } else if (Input.GetMouseButtonUp(0) && _dragging) {
             _dragging = false;
-            _possibleCells.ForEach(x => x.SetActive(false));
-            TryPuttingBlock();
         }
     }
 
-    private void TryPuttingBlock() {
-        CellComponent closestCell = GetCellUnderBlock();
-        Vector2Int newPosition = (closestCell != null) ? new Vector2Int((int) closestCell.transform.position.x, (int) closestCell.transform.position.y) : _block.Position;
+    private IEnumerator StartDragging() {
+        if (_dragging) {
+            yield break;
+        }
+
+        _dragging = true;
+        GameField.GetInstance().LiftBlock(_block);
+        
+        List<CellComponent> availableCells = GameField.GetInstance().GetEmptyAdjacentCells(_block);
+        availableCells.ForEach(x => x.SetActive(true));
+
+        while (_dragging) {
+            FollowCursor();
+            yield return null;
+        }
+
+        availableCells.ForEach(x => x.SetActive(false));
+        TryPuttingBlock(availableCells);
+    }
+
+    private void TryPuttingBlock(List<CellComponent> availableCells) {
+        CellComponent cell = GetCellUnderBlock();
+        if (!availableCells.Contains(cell)) {
+            cell = null;
+        }
+
+        Vector2Int newPosition = (cell != null) ? new Vector2Int((int) cell.transform.position.x, (int) cell.transform.position.y) : _block.Position;
         _block.SetPosition(newPosition);
 
-        GameField.GetInstance().Data.AddBlock(_block);
+        GameField.GetInstance().PutBlock(_block);
         GameField.GetInstance().CheckWinCondition();
     }
 
@@ -47,7 +58,7 @@ public class DragComponent : MonoBehaviour {
         RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero, 100, layerMask);
         if (hit) {
             CellComponent cell = hit.transform.GetComponent<CellComponent>();
-            return (_possibleCells.Contains(cell)) ? cell : null;
+            return cell;
         }
         return null;
     }

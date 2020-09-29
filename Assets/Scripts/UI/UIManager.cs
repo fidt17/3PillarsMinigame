@@ -8,12 +8,12 @@ public class UIManager : Singleton<UIManager> {
     [SerializeField] GameObject _winMenu;
 
     public void OnButtonStart() {
-        FieldSetup.GetInstance().StartNewGame();
+        GameField.GetInstance().StartNewGame();
         _startMenu.SetActive(false);
     }
 
     public void OnButtonRestart() {
-        FieldSetup.GetInstance().RestartGame();
+        GameField.GetInstance().RestartGame();
         _winMenu.SetActive(false);
     }
 

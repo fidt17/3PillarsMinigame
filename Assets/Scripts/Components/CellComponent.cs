@@ -12,7 +12,7 @@ public class CellComponent : MonoBehaviour {
     private bool _isMouseOver = false;
 
     private void Awake() {
-        _spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
+        _spriteRenderer = GetComponent<SpriteRenderer>();
         SetActive(false);
     }
 
