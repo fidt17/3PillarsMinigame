@@ -9,7 +9,6 @@ public class CellComponent : MonoBehaviour {
     [SerializeField] private Material _glowingMaterial;
     
     private SpriteRenderer _spriteRenderer;
-    private bool _isMouseOver = false;
 
     private void Awake() {
         _spriteRenderer = GetComponent<SpriteRenderer>();

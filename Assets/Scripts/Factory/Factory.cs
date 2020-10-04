@@ -11,22 +11,13 @@ public class Factory : Singleton<Factory> {
     [Header("Blocks")]
     [SerializeField] private GameObject _blockPrefab;
     [SerializeField] private Transform _blockParent;
+    [SerializeField] private List<Sprite> _blockVariants;
 
-    [Header("Colors")]
-    [SerializeField] private List<Color> _colorVariants;
-    [SerializeField] private Color _solidBlockColor;
-
-    public GameObject CreateCell(int x, int y) {
-        GameObject cell = Instantiate(_cellPrefab, _cellParent);
-        cell.transform.position = new Vector3(x, y, 0);
-        return cell;
-    }
+    public GameObject CreateCell(int x, int y) => Instantiate(_cellPrefab, new Vector3(x, y, 0), Quaternion.identity, _cellParent);
 
     public GameObject CreateBlockOfType(BlockType type) {
         GameObject obj = Instantiate(_blockPrefab, _blockParent);
-        obj.GetComponent<SpriteRenderer>().color = GetBlockColorByType(type);
+        obj.GetComponent<SpriteRenderer>().sprite = _blockVariants[(int) type];
         return obj;
     }
-
-    private Color GetBlockColorByType(BlockType type) => (type == BlockType.solid) ? _solidBlockColor : _colorVariants[(int) type];
 }

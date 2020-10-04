@@ -38,6 +38,9 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: Background
+    uniqueID: 768926705
+    locked: 0
   - name: Field Frame
     uniqueID: 978485075
     locked: 0

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 [RequireComponent(typeof(BoxCollider2D))]
 public class DragComponent : MonoBehaviour {
@@ -15,8 +16,6 @@ public class DragComponent : MonoBehaviour {
     private void OnMouseOver() {
         if (Input.GetMouseButtonDown(0) && !UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) {
             StartCoroutine(StartDragging());
-        } else if (Input.GetMouseButtonUp(0) && _dragging) {
-            _dragging = false;
         }
     }
 
@@ -28,37 +27,43 @@ public class DragComponent : MonoBehaviour {
         _dragging = true;
         GameField.GetInstance().LiftBlock(_block);
         
-        List<CellComponent> availableCells = GameField.GetInstance().GetEmptyAdjacentCells(_block);
-        availableCells.ForEach(x => x.SetActive(true));
+        List<Cell> availableCells = GameField.GetInstance().GetEmptyAdjacentCells(_block);
+        availableCells.ForEach(x => x.CellComponent.SetActive(true));
 
         while (_dragging) {
             FollowCursor();
+            if (Input.GetMouseButtonUp(0)) {
+                _dragging = false;
+            }
             yield return null;
         }
 
-        availableCells.ForEach(x => x.SetActive(false));
         TryPuttingBlock(availableCells);
     }
 
-    private void TryPuttingBlock(List<CellComponent> availableCells) {
-        CellComponent cell = GetCellUnderBlock();
-        if (!availableCells.Contains(cell)) {
-            cell = null;
+    private void TryPuttingBlock(List<Cell> availableCells) {
+        CellComponent cellComponent = GetCellUnderBlock();
+        Cell closestCell = availableCells[0];
+        foreach (Cell c in availableCells) {
+            if (c.CellComponent == cellComponent) {
+                closestCell = c;
+                break;
+            }
         }
 
-        Vector2Int newPosition = (cell != null) ? new Vector2Int((int) cell.transform.position.x, (int) cell.transform.position.y) : _block.Position;
-        _block.SetPosition(newPosition);
+        GameField.GetInstance().PutBlockAt(_block, closestCell);
+        availableCells.ForEach(x => x.CellComponent.SetActive(false));
 
-        GameField.GetInstance().PutBlock(_block);
-        GameField.GetInstance().CheckWinCondition();
+        if (GameField.GetInstance().CheckWinCondition()) {
+            UIManager.GetInstance().ShowWinMenu();
+        }
     }
 
     private CellComponent GetCellUnderBlock() {
         int layerMask = LayerMask.GetMask("Cells");
         RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero, 100, layerMask);
         if (hit) {
-            CellComponent cell = hit.transform.GetComponent<CellComponent>();
-            return cell;
+            return hit.transform.GetComponent<CellComponent>();
         }
         return null;
     }

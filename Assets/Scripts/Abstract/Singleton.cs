@@ -15,6 +15,7 @@ public abstract class Singleton<T> : MonoBehaviour where T : Component {
                 _instance = obj.AddComponent<T>();
             }
         }
+
         return _instance;
     }
 

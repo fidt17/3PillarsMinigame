@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Cell {
+    
     public Vector2Int Position => _position;
     public int X => _position.x;
     public int Y => _position.y;
@@ -13,7 +14,6 @@ public class Cell {
     public CellComponent CellComponent => _gameObject.GetComponent<CellComponent>();
 
     private Vector2Int _position;
-
     private GameObject _gameObject;
     private Block _block;
 
@@ -28,6 +28,7 @@ public class Cell {
             return;
         }
         _block = block;
+        _block.SetPosition(_position);
     }
 
     public void RemoveBlock() => _block = null;

@@ -1,35 +1,42 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class Grid {
-    private const short _gridSize = 5;
+
+    private const int _gridSize = 5;
 
     private Cell[,] _cells;
-
-    public Cell CellAt(int x, int y) => (IsPositionViable(x, y)) ? _cells[x, y] : null;
 
     public void CreateGrid() {
         CreateCells();
         CreateBlocks();
     }
 
-    public void ShuffleBlocks() {
-        List<Block> existingBlocks = new List<Block>();
+    public Cell CellAt(int x, int y) => (IsPositionViable(x, y)) ? _cells[x, y] : null;
+
+    //Although the chance of win condition after shuffling is extremly low,
+    //I will put a check here anyway.
+    public void ShuffleBlocks(List<Block> draggableBlocks) {
+        while (draggableBlocks != null) {
+            draggableBlocks.ForEach(x => GetRandomEmptyCell().AddBlock(x));
+            draggableBlocks = (GameField.GetInstance().CheckWinCondition()) ? GetDraggableBlocks() : null;
+        }
+    }
+
+    public List<Block> GetDraggableBlocks() {
+        List<Block> draggableBlocks = new List<Block>();
         for (int x = 0; x < _gridSize; x++) {
             for (int y = 0; y < _gridSize; y++) {
                 if (_cells[x, y].HasBlock && _cells[x, y].Block.Type != BlockType.solid) {
-                    existingBlocks.Add(_cells[x, y].Block);
+                    draggableBlocks.Add(_cells[x, y].Block);
                     _cells[x, y].RemoveBlock();
                 }
             }
         }
 
-        foreach (Block block in existingBlocks) {
-            Cell cell = GetRandomEmptyCell();
-            block.SetPosition(cell.Position);
-            cell.AddBlock(block);
-        }
+        return draggableBlocks;
     }
 
     private void CreateCells() {
@@ -47,20 +54,18 @@ public class Grid {
         for (int x = 1; x <= 3; x += 2) {
             for (int y = 0; y <= 4; y += 2) {
                 GameObject obj = Factory.GetInstance().CreateBlockOfType(BlockType.solid);
-                Vector2Int position = new Vector2Int(x, y);
-                Block block = new Block(position, BlockType.solid, obj);
-                _cells[x, y].AddBlock(block);
+                _cells[x, y].AddBlock(new Block(BlockType.solid, obj));
             }
         }
-        //Draggable blocks
+
+        List<Block> draggableBlocks = new List<Block>();
         for (int blockColumn = 0; blockColumn < 3; blockColumn++) {
             for (int i = 0; i < 5; i++) {
                 GameObject obj = Factory.GetInstance().CreateBlockOfType((BlockType) blockColumn);
-                Cell cell = GetRandomEmptyCell();
-                Block block = new Block(cell.Position, (BlockType) blockColumn, obj);
-                cell.AddBlock(block);
+                draggableBlocks.Add(new Block((BlockType) blockColumn, obj));
             }
         }
+        ShuffleBlocks(draggableBlocks);
     }
 
     private Cell GetRandomEmptyCell() {
